@@ -89,6 +89,14 @@ npm start
 - Backend: `http://localhost:8000`
 - API Docs: `http://localhost:8000/docs`
 
+## Dataset
+
+The full project dataset is available here:
+
+- Google Drive: `https://drive.google.com/drive/folders/1G_va3pWg0hYAqFfevWvc34Brw5cVOc_T`
+
+Download the dataset files from the shared folder and place them in the `datasets/` directory if you want to run the full training and preprocessing pipeline locally.
+
 ## Machine Learning Used
 
 - Sentiment Analysis using NLP-based methods

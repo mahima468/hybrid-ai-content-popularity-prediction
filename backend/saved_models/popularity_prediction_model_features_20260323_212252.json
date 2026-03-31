@@ -1,0 +1,19 @@
+[
+  "views",
+  "likes",
+  "comments",
+  "engagement_rate",
+  "sentiment_score",
+  "like_to_view_ratio",
+  "comment_to_view_ratio",
+  "like_to_comment_ratio",
+  "log_views",
+  "log_likes",
+  "log_comments",
+  "shares",
+  "has_media",
+  "is_trending",
+  "channel_subscribers",
+  "time_since_publication",
+  "content_length"
+]

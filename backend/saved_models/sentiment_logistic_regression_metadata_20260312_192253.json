@@ -1,0 +1,7 @@
+{
+  "model_type": "sentiment_analysis",
+  "timestamp": "20260312_192253",
+  "model_path": "saved_models/sentiment_logistic_regression_20260312_192253.joblib",
+  "vectorizer_path": "saved_models/sentiment_logistic_regression_vectorizer_20260312_192253.joblib",
+  "training_samples": 1000
+}

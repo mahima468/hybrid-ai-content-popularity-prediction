@@ -1,0 +1,7 @@
+{
+  "model_type": "sentiment_analysis",
+  "timestamp": "20260323_211931",
+  "model_path": "saved_models/sentiment_naive_bayes_20260323_211931.joblib",
+  "vectorizer_path": "saved_models/sentiment_naive_bayes_vectorizer_20260323_211931.joblib",
+  "training_samples": 15000
+}

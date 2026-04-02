@@ -82,9 +82,7 @@ def load_model():
         model_loaded = False
         return False
 
-# Initialize dataset loader and model loader
-dataset_loader = DatasetLoader()
-model_loader = ModelLoader()
+# dataset_loader and model_loader are already imported as instances above
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

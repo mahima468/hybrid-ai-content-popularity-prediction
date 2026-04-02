@@ -22,6 +22,8 @@ except ImportError:
 from routes.sentiment_routes import router as sentiment_router
 from routes.engagement_routes import router as engagement_router
 from routes.prediction_routes import router as prediction_router
+from routes.auth_routes import router as auth_router
+from routes.chat_routes import router as chat_router
 from utils.model_loader import model_loader, load_all_models
 from models.engagement_detector import get_engagement_detector
 from utils.dataset_loader import dataset_loader, get_dashboard_stats
@@ -108,6 +110,8 @@ app.add_middleware(
 app.include_router(sentiment_router, prefix="/api/sentiment", tags=["sentiment"])
 app.include_router(engagement_router, prefix="/api/engagement", tags=["engagement"])
 app.include_router(prediction_router, prefix="/api/prediction", tags=["prediction"])
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(chat_router, prefix="/api", tags=["chat"])
 
 # Pydantic models for new endpoints
 class EngagementFeatures(BaseModel):

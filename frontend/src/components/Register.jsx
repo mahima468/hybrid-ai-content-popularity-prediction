@@ -7,7 +7,7 @@ import { Email, Lock, Visibility, VisibilityOff, SmartToy, Person } from '@mui/i
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://127.0.0.1:8000/api/auth';
+const API = `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/auth`;
 
 export default function Register() {
   const { login } = useAuth();

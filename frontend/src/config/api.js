@@ -73,4 +73,5 @@ export const uploadFile = async (endpoint, file, additionalData = {}) => {
   return apiCall(endpoint, { method: 'POST', body: formData, headers: {} });
 };
 
-export default { API_BASE_URL, API_ENDPOINTS, apiCall, uploadFile };
+const api = { API_BASE_URL, API_ENDPOINTS, apiCall, uploadFile };
+export default api;

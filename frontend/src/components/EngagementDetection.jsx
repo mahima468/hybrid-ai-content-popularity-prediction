@@ -12,7 +12,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell
 } from 'recharts';
-import { apiCall, API_ENDPOINTS } from '../config/api';
+import { apiCall, logAnalysis, API_ENDPOINTS } from '../config/api';
 
 const getAuthLevel = (score) => {
   if (score >= 80) return { label: 'Very High', color: '#10B981', bg: '#D1FAE5' };
@@ -72,14 +72,32 @@ export default function EngagementDetection() {
     setError('');
     setResult(null);
     try {
+      const likesVal = likes || 0;
+      const commentsVal = comments || 0;
+      const engagementRate = views > 0 ? ((likesVal + commentsVal) / views) : 0;
       const data = await apiCall(API_ENDPOINTS.ENGAGEMENT_DETECT, {
         method: 'POST',
         body: JSON.stringify({
-          metrics: { views, likes: likes || 0, comments: comments || 0 },
-          include_detailed_analysis: includeDetail,
+          views,
+          likes: likesVal,
+          comments: commentsVal,
+          shares: 0,
+          engagement_rate: parseFloat(engagementRate.toFixed(6)),
         }),
       });
-      setResult(data);
+      const isSuspicious = data.is_suspicious ?? (data.classification === 'suspicious');
+      const confidence = data.confidence ?? 0.5;
+      const authScore = isSuspicious
+        ? Math.max(5, Math.round((1 - confidence) * 60))
+        : Math.min(98, Math.round(50 + confidence * 48));
+      setResult({
+        ...data,
+        engagement_authenticity_score: authScore,
+        is_fake_engagement: isSuspicious,
+        suspicion_level: isSuspicious ? (confidence > 0.75 ? 'High' : 'Medium') : 'Low',
+        anomaly_score: data.anomaly_score ?? 0,
+      });
+      logAnalysis('engagement', isSuspicious ? 'Suspicious' : 'Authentic', confidence);
     } catch (e) {
       setError(e.message);
     } finally {

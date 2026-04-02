@@ -12,7 +12,8 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { apiCall, API_ENDPOINTS } from '../config/api';
+import { apiCall, logAnalysis, API_ENDPOINTS } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 const SENTIMENT_COLORS = ['#6366F1', '#EF4444', '#10B981'];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -80,6 +81,7 @@ const ActivityItem = ({ item }) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quickText, setQuickText] = useState('');
@@ -92,23 +94,18 @@ export default function Dashboard() {
 
   const fetchAnalytics = async () => {
     try {
-      const data = await apiCall(API_ENDPOINTS.DASHBOARD_ANALYTICS);
+      const data = await apiCall(API_ENDPOINTS.MY_STATS);
       setAnalytics(data);
     } catch {
       setAnalytics({
-        total_analyses: 12847,
-        total_predictions: 3420,
-        avg_sentiment_score: 0.68,
-        fake_engagement_rate: 12.4,
-        model_accuracy: 94.2,
-        sentiment_distribution: { positive: 62, negative: 28, neutral: 10 },
-        weekly_analyses: [320, 450, 380, 510, 490, 620, 580],
-        recent_activity: [
-          { type: 'sentiment', label: 'Positive', confidence: 0.92, time: '2 min ago' },
-          { type: 'engagement', label: 'Authentic', confidence: 0.87, time: '5 min ago' },
-          { type: 'prediction', label: 'High Popularity', confidence: 0.79, time: '12 min ago' },
-          { type: 'sentiment', label: 'Negative', confidence: 0.85, time: '18 min ago' },
-        ],
+        total_analyses: 0,
+        sentiment_count: 0,
+        engagement_count: 0,
+        prediction_count: 0,
+        avg_confidence: 0,
+        sentiment_distribution: { positive: 0, negative: 0, neutral: 0 },
+        weekly_analyses: [0, 0, 0, 0, 0, 0, 0],
+        recent_activity: [],
       });
     } finally {
       setLoading(false);
@@ -125,6 +122,8 @@ export default function Dashboard() {
         body: JSON.stringify({ text: quickText, method: 'logistic' }),
       });
       setQuickResult(data);
+      logAnalysis('sentiment', data.sentiment, data.confidence);
+      fetchAnalytics();
     } catch (e) {
       setQuickResult({ error: e.message });
     } finally {
@@ -167,7 +166,10 @@ export default function Dashboard() {
             <Chip label="AI-Powered" size="small" sx={{ background: 'rgba(255,255,255,0.15)', color: 'white', fontSize: 11, height: 22 }} />
           </Box>
           <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mb: 0.5 }}>
-            Welcome to HybridAI Dashboard
+            Welcome{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+          </Typography>
+          <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, fontWeight: 500, mb: 0.5 }}>
+            to HybridAI Dashboard
           </Typography>
           <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, mb: 2, maxWidth: 500 }}>
             Analyze sentiment, detect fake engagement, and predict content popularity using advanced machine learning models trained on real-world YouTube data.
@@ -199,40 +201,39 @@ export default function Dashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Analyses"
-            value={analytics?.total_analyses?.toLocaleString()}
-            subtitle="All time"
+            value={(analytics?.total_analyses ?? 0).toLocaleString()}
+            subtitle="Your all-time count"
             icon={<Analytics />}
             color="#4F46E5"
-            trend="+12.5%"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Avg Sentiment Score"
-            value={`${((analytics?.avg_sentiment_score || 0) * 100).toFixed(0)}%`}
-            subtitle="Positivity rate"
+            title="Sentiment Analyses"
+            value={(analytics?.sentiment_count ?? 0).toLocaleString()}
+            subtitle="Texts analysed"
             icon={<Psychology />}
             color="#10B981"
-            trend="+4.2%"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Fake Engagement"
-            value={`${analytics?.fake_engagement_rate?.toFixed(1)}%`}
-            subtitle="Detected this month"
+            title="Engagement Checks"
+            value={(analytics?.engagement_count ?? 0).toLocaleString()}
+            subtitle="Posts checked"
             icon={<Security />}
             color="#EF4444"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Model Accuracy"
-            value={`${analytics?.model_accuracy?.toFixed(1)}%`}
-            subtitle="Across all models"
+            title="Predictions Made"
+            value={(analytics?.prediction_count ?? 0).toLocaleString()}
+            subtitle={analytics?.avg_confidence > 0
+              ? `Avg ${((analytics.avg_confidence) * 100).toFixed(0)}% confidence`
+              : 'Popularity forecasts'}
             icon={<TrendingUp />}
             color="#F59E0B"
-            trend="+1.3%"
           />
         </Grid>
       </Grid>
@@ -402,14 +403,22 @@ export default function Dashboard() {
                   View All
                 </Button>
               </Box>
-              {(analytics?.recent_activity || []).map((item, i) => (
+              {(analytics?.recent_activity || []).length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Analytics sx={{ fontSize: 40, color: '#CBD5E1', mb: 1 }} />
+                  <Typography sx={{ fontSize: 13, color: '#94A3B8' }}>No activity yet</Typography>
+                  <Typography sx={{ fontSize: 12, color: '#CBD5E1', mt: 0.5 }}>
+                    Start an analysis to see your history here
+                  </Typography>
+                </Box>
+              ) : (analytics.recent_activity.map((item, i) => (
                 <Box key={i}>
                   <ActivityItem item={item} />
                   {i < analytics.recent_activity.length - 1 && (
                     <Divider sx={{ borderColor: '#F8FAFC' }} />
                   )}
                 </Box>
-              ))}
+              )))}
             </CardContent>
           </Card>
         </Grid>

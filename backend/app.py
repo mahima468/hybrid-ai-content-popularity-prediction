@@ -9,7 +9,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
 import logging
+import os
 from datetime import datetime
+
+# Load .env if present
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from routes.sentiment_routes import router as sentiment_router
 from routes.engagement_routes import router as engagement_router

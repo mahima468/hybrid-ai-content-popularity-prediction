@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
   CssBaseline, Box, Drawer, AppBar, Toolbar, Typography, List,
   ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton,
-  useMediaQuery
+  useMediaQuery, Avatar, Menu, MenuItem, Divider, Tooltip
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -14,7 +14,8 @@ import {
   CloudUpload,
   FlashOn,
   Menu as MenuIcon,
-  SmartToy
+  SmartToy,
+  Logout,
 } from '@mui/icons-material';
 import Dashboard from './components/Dashboard';
 import SentimentAnalysis from './components/SentimentAnalysis';
@@ -22,6 +23,10 @@ import EngagementDetection from './components/EngagementDetection';
 import PopularityPrediction from './components/PopularityPrediction';
 import UploadData from './components/UploadData';
 import LivePrediction from './components/LivePrediction';
+import Chatbot from './components/Chatbot';
+import Login from './components/Login';
+import Register from './components/Register';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 const DRAWER_WIDTH = 260;
 
@@ -48,11 +53,7 @@ const theme = createTheme({
         },
       },
     },
-    MuiPaper: {
-      styleOverrides: {
-        root: { borderRadius: 16 },
-      },
-    },
+    MuiPaper: { styleOverrides: { root: { borderRadius: 16 } } },
     MuiButton: {
       styleOverrides: {
         root: { borderRadius: 10, textTransform: 'none', fontWeight: 600 },
@@ -72,6 +73,7 @@ const NAV_ITEMS = [
   { label: 'Popularity Prediction', path: '/prediction', icon: <TrendingUp /> },
   { label: 'Live Prediction', path: '/live-prediction', icon: <FlashOn /> },
   { label: 'Upload Data', path: '/upload', icon: <CloudUpload /> },
+  { label: 'AI Chatbot', path: '/chatbot', icon: <SmartToy /> },
 ];
 
 function Sidebar({ mobileOpen, onClose }) {
@@ -92,7 +94,6 @@ function Sidebar({ mobileOpen, onClose }) {
       display: 'flex',
       flexDirection: 'column',
     }}>
-      {/* Logo */}
       <Box sx={{ p: 3, pb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
           <Box sx={{
@@ -113,7 +114,6 @@ function Sidebar({ mobileOpen, onClose }) {
         </Box>
       </Box>
 
-      {/* Navigation */}
       <Box sx={{ px: 1.5, flex: 1 }}>
         <Typography sx={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', px: 1.5, mb: 1, letterSpacing: 1 }}>
           MAIN MENU
@@ -126,9 +126,7 @@ function Sidebar({ mobileOpen, onClose }) {
                 <ListItemButton
                   onClick={() => handleNav(path)}
                   sx={{
-                    borderRadius: 2,
-                    py: 1.2,
-                    px: 1.5,
+                    borderRadius: 2, py: 1.2, px: 1.5,
                     background: active ? 'rgba(99,102,241,0.25)' : 'transparent',
                     border: active ? '1px solid rgba(99,102,241,0.4)' : '1px solid transparent',
                     '&:hover': { background: 'rgba(255,255,255,0.08)' },
@@ -154,7 +152,6 @@ function Sidebar({ mobileOpen, onClose }) {
           })}
         </List>
       </Box>
-
     </Box>
   );
 
@@ -192,19 +189,71 @@ function PageTitle() {
   return item?.label || 'Dashboard';
 }
 
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [anchor, setAnchor] = useState(null);
+
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+
+  return (
+    <>
+      <Tooltip title={user?.name || 'Account'}>
+        <IconButton onClick={e => setAnchor(e.currentTarget)} size="small" sx={{ ml: 1 }}>
+          <Avatar sx={{
+            width: 36, height: 36,
+            background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+            fontSize: 14, fontWeight: 700,
+          }}>
+            {initials}
+          </Avatar>
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={anchor}
+        open={Boolean(anchor)}
+        onClose={() => setAnchor(null)}
+        PaperProps={{ sx: { mt: 1, minWidth: 190, borderRadius: 2 } }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 14, color: '#1E293B' }}>{user?.name}</Typography>
+          <Typography sx={{ fontSize: 12, color: '#94A3B8' }}>{user?.email}</Typography>
+        </Box>
+        <Divider />
+        <MenuItem
+          onClick={() => { setAnchor(null); logout(); navigate('/login'); }}
+          sx={{ gap: 1.5, color: '#EF4444', py: 1.2 }}
+        >
+          <Logout sx={{ fontSize: 18 }} />
+          <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Sign Out</Typography>
+        </MenuItem>
+      </Menu>
+    </>
+  );
+}
+
 function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+  const location = useLocation();
+  const mainRef = useRef(null);
+
+  useEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, [location.pathname]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', background: '#F1F5F9' }}>
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Top Header */}
         <AppBar
-          position="sticky"
-          elevation={0}
+          position="sticky" elevation={0}
           sx={{
             background: 'rgba(255,255,255,0.9)',
             backdropFilter: 'blur(12px)',
@@ -226,11 +275,24 @@ function AppLayout() {
                 Hybrid AI Content Popularity Prediction System
               </Typography>
             </Box>
+            <Tooltip title="AI Chatbot">
+              <IconButton
+                onClick={() => navigate('/chatbot')}
+                sx={{
+                  width: 36, height: 36,
+                  background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                  '&:hover': { background: 'linear-gradient(135deg, #4F46E5, #7C3AED)' },
+                  borderRadius: 2,
+                }}
+              >
+                <SmartToy sx={{ color: 'white', fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+            <UserMenu />
           </Toolbar>
         </AppBar>
 
-        {/* Main Content */}
-        <Box component="main" sx={{ flex: 1, p: { xs: 2, md: 3 }, overflow: 'auto' }}>
+        <Box ref={mainRef} component="main" sx={{ flex: 1, p: { xs: 2, md: 3 }, overflow: 'auto' }}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/sentiment" element={<SentimentAnalysis />} />
@@ -238,6 +300,7 @@ function AppLayout() {
             <Route path="/prediction" element={<PopularityPrediction />} />
             <Route path="/live-prediction" element={<LivePrediction />} />
             <Route path="/upload" element={<UploadData />} />
+            <Route path="/chatbot" element={<Chatbot />} />
           </Routes>
         </Box>
       </Box>
@@ -245,13 +308,29 @@ function AppLayout() {
   );
 }
 
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? children : <Navigate to="/login" replace />;
+}
+
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <AppLayout />
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

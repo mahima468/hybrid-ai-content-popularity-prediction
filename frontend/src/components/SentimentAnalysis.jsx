@@ -13,7 +13,7 @@ import {
   BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend
 } from 'recharts';
-import { apiCall, uploadFile, API_ENDPOINTS } from '../config/api';
+import { apiCall, uploadFile, logAnalysis, API_ENDPOINTS } from '../config/api';
 
 const METHODS = [
   { value: 'logistic', label: 'Logistic Regression' },
@@ -71,6 +71,7 @@ export default function SentimentAnalysis() {
       });
       setResult(data);
       setHistory(prev => [{ ...data, inputText: text.trim() }, ...prev].slice(0, 10));
+      logAnalysis('sentiment', data.sentiment, data.confidence);
     } catch (e) {
       setError(e.message);
     } finally {
